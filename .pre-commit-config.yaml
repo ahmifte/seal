@@ -1,0 +1,16 @@
+# Optional: use the pre-commit Python framework instead of install.sh.
+# Run: pre-commit install
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+
+  - repo: local
+    hooks:
+      - id: seal-block-env-files
+        name: seal — block .env commits
+        entry: bash -c 'for f in $(git diff --cached --name-only); do case "$f" in .env|.env.local|.env.production) echo "blocked: $f"; exit 1;; esac; done'
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
