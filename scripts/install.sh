@@ -11,6 +11,13 @@ if [[ ! -d "$TARGET/.git" ]]; then
   exit 1
 fi
 
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "error: gitleaks is required but not installed" >&2
+  echo "  brew install gitleaks" >&2
+  echo "  https://github.com/gitleaks/gitleaks#installing" >&2
+  exit 1
+fi
+
 HOOKS_DIR="$TARGET/.githooks"
 mkdir -p "$HOOKS_DIR"
 
@@ -42,5 +49,4 @@ fi
 echo "seal installed in $TARGET"
 echo "  hook: .githooks/pre-commit"
 echo "  config: core.hooksPath=.githooks"
-echo ""
-echo "Optional (recommended): brew install gitleaks"
+echo "  gitleaks: $(gitleaks version 2>/dev/null | head -1 || echo 'installed')"
