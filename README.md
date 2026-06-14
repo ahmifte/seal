@@ -5,15 +5,22 @@
 
 A lightweight, installable **pre-commit hook** that blocks accidental secrets, API keys, and private env files before they reach git.
 
-No framework required — one script, optional [gitleaks](https://github.com/gitleaks/gitleaks) for deep scanning.
+Requires [gitleaks](https://github.com/gitleaks/gitleaks) — no commits go through without it.
 
 ## What it catches
 
 - **Blocked files:** `.env`, `.env.local`, `credentials.json`, `*.pem`, private keys
-- **Secret patterns (fallback):** Stripe (`sk_`, `rk_`, `whsec_`), OpenAI (`sk-...`), GitHub tokens (`ghp_`, `gho_`, `github_pat_`), AWS (`AKIA...`), Slack (`xox...`)
-- **With gitleaks installed:** 100+ additional rules via extended `gitleaks.toml`
+- **Secret scan:** 100+ rules via gitleaks + extended [`gitleaks.toml`](gitleaks.toml) (Stripe, OpenAI, GitHub, AWS, Slack, and more)
 
 `.env.example` and documented placeholders are allowlisted.
+
+## Prerequisites
+
+```bash
+brew install gitleaks
+```
+
+The hook refuses to run if gitleaks is missing. `install.sh` checks for it too.
 
 ## Quick install (any repo)
 
@@ -32,14 +39,6 @@ This sets `core.hooksPath=.githooks`, copies the hook + config, and patches `.gi
 
 Expects repos under `~/projects/` (`folio`, `flowforge`, `distill`, `pathfinder`, `aikit`).
 
-## Recommended: install gitleaks
-
-```bash
-brew install gitleaks
-```
-
-Without it, seal still runs a built-in regex scan. With it, you get full gitleaks coverage on every commit.
-
 ## Alternative: pre-commit framework
 
 If you already use [pre-commit](https://pre-commit.com):
@@ -55,15 +54,13 @@ Uses [`.pre-commit-config.yaml`](.pre-commit-config.yaml) with gitleaks + env-fi
 ```mermaid
 flowchart TD
   commit[git commit] --> hook[seal pre-commit hook]
-  hook --> blockEnv{".env / credentials staged?"}
-  blockEnv -->|yes| fail[Block commit]
-  blockEnv -->|no| gitleaks{gitleaks installed?}
-  gitleaks -->|yes| scan[gitleaks protect --staged]
-  gitleaks -->|no| regex[built-in regex scan]
+  hook --> gitleaks{gitleaks installed?}
+  gitleaks -->|no| fail[Block commit]
+  gitleaks -->|yes| blockEnv{".env / credentials staged?"}
+  blockEnv -->|yes| fail
+  blockEnv -->|no| scan[gitleaks protect --staged]
   scan --> pass[Allow commit]
-  regex --> pass
   scan -->|secret found| fail
-  regex -->|secret found| fail
 ```
 
 ## Uninstall
